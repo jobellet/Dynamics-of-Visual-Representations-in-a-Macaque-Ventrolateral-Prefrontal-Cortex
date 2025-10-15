@@ -53,7 +53,7 @@ def m_pathway_filter_gaussian(image,
 
     return image_filtered
 
-def radial_average_vectorized(magnitude_spectrum, visual_angle=10):
+def radial_average_vectorized(magnitude_spectrum, visual_angle=8):
     """
     Compute the radial average of a 2D magnitude spectrum.
     
@@ -112,7 +112,7 @@ def process_and_filter_images(stimulus_folder, output_folder, filter_func=m_path
         cv2.imwrite(output_path, filtered_img)
     print(f"Processed {len(image_files)} images from {stimulus_folder} and saved to {output_folder}.")
 
-def compute_radial_spectra(stimulus_folder, output_folder, visual_angle=10, epsilon=1e-8):
+def compute_radial_spectra(stimulus_folder, output_folder, visual_angle=8, epsilon=1e-8):
     """
     Compute the radial spectra (log magnitude) for both original and filtered images.
     
