@@ -5,7 +5,6 @@ high_variation_stimuli.zip,52851641
 continuous_signals_spikes_and_events.zip,53127599
 myweights,53127767
 inpainted_images.zip,54590777
-deepNetFeatures.zip,58798141
 deepNetFeatures_landscape.zip,54844511
 rsa_results.npz,55435823
 Mean_eye_position_even_sessions.npy,55738811
@@ -18,3 +17,6 @@ aggregated_eye_pos.npy,55738829
 Spike_count_even_sessions.npy,55738832
 Spike_count_odd_sessions.npy,55738835
 aggregated_spike_counts.npy,55738838
+deepNetFeatures.zip,58798141
+mean_pos_error_per_trial.npy,58861828
+mean_predprob_per_trial_lowpass.npy,58861831
