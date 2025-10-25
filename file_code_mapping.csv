@@ -11,8 +11,8 @@ Mean_eye_position_even_sessions.npy,55738811
 aggregated_pupil.npy,55738814
 recording_metadata.csv,55738817
 Mean_eye_position_odd_sessions.npy,55738820
-Mean_pupil_size_even_sessions.npy,55738823
-Mean_pupil_size_odd_sessions.npy,55738826
+Mean_pupil_size_even_sessions.npy,59042933
+Mean_pupil_size_odd_sessions.npy,59042936
 aggregated_eye_pos.npy,55738829
 Spike_count_even_sessions.npy,55738832
 Spike_count_odd_sessions.npy,55738835
@@ -20,3 +20,5 @@ aggregated_spike_counts.npy,55738838
 deepNetFeatures.zip,58798141
 mean_pos_error_per_trial.npy,58861828
 mean_predprob_per_trial_lowpass.npy,58861831
+df_saccades_odd.pkl,59042939
+df_saccades_even.pkl,59042942
