@@ -10,7 +10,6 @@ rsa_results.npz,55435823
 deepNetFeatures.zip,58798141
 mean_pos_error_per_trial.npy,58861828
 mean_predprob_per_trial_lowpass.npy,58861831
-df_saccades_odd.pkl,59120198
 Mean_pupil_size_even_sessions.npy,59120201
 recording_metadata.csv,59120204
 Mean_pupil_size_odd_sessions.npy,59120207
@@ -18,7 +17,6 @@ Spike_count_odd_sessions.npy,59120216
 Mean_eye_position_even_sessions.npy,59120219
 valid_mask.npy,59120222
 aggregated_eye_pos.npy,59120225
-df_saccades_even.pkl,59120231
 Mean_eye_position_odd_sessions.npy,59120234
 aggregated_pupil.npy,59120240
 saccade_data.pkl,59120249
@@ -31,3 +29,6 @@ Mean_eye_position_odd_sessions_ms_free.npy,59316746
 Mean_eye_position_even_sessions_ms_free.npy,59316749
 Spike_count_odd_sessions_ms_free.npy,59316752
 Spike_count_even_sessions_ms_free.npy,59316755
+saccade_data.pkl,59322971
+df_saccades_odd.pkl,59322974
+df_saccades_even.pkl,59322977
