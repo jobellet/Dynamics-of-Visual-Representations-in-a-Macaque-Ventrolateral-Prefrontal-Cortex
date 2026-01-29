@@ -1,11 +1,11 @@
-import urllib.request
-import urllib.error
-import zipfile
-import shutil
 import os
-import pandas as pd
+import shutil
+import zipfile
 import hashlib
 import time
+import requests
+import pandas as pd
+from requests.exceptions import RequestException
 
 # Function to calculate MD5 checksum
 def calculate_md5(filepath):
@@ -20,12 +20,16 @@ def calculate_md5(filepath):
         return None
 
 def download_figshare_file(code, filename, expected_md5=None, private_link='', token=None, force_download=False):
-    # Construct URL
+    """
+    Downloads a file from Figshare using requests.
+    Handles redirects and authentication to bypass AWS WAF blocking.
+    """
+    # Construct URL with private link if present
+    url = f'https://figshare.com/ndownloader/files/{code}'
+    params = {}
     if private_link:
-        url = f'https://figshare.com/ndownloader/files/{code}?private_link={private_link}'
-    else:
-        url = f'https://figshare.com/ndownloader/files/{code}'
-    
+        params['private_link'] = private_link
+
     # 1. Check if file already exists
     if os.path.exists(filename) and not force_download:
         if expected_md5:
@@ -45,63 +49,74 @@ def download_figshare_file(code, filename, expected_md5=None, private_link='', t
     max_retries = 5
     attempt = 0
     
+    # Headers to mimic a real browser (Critical for public access later)
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Connection': 'keep-alive',
+    }
+    
+    # Add Token if provided (Critical for private access now)
+    if token:
+        headers['Authorization'] = f'token {token}'
+
     while attempt < max_retries:
         attempt += 1
         print(f"Downloading {filename} (Attempt {attempt}/{max_retries})...")
         
         try:
-            # Create Request object to allow headers
-            req = urllib.request.Request(url)
-            
-            # [CRITICAL] User-Agent mimics a browser. 
-            # This ensures the script works for PUBLIC files in the future without a token.
-            req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
-            
-            # [CRITICAL] Authorization header for PRIVATE/EMBARGOED files.
-            # You only need to pass 'token' while the dataset is private.
-            if token:
-                req.add_header('Authorization', f'token {token}')
+            # Use requests.get with stream=True
+            with requests.get(url, params=params, headers=headers, stream=True, allow_redirects=True) as r:
+                r.raise_for_status() # Raises error for 403/404
+                
+                # Check for empty content before writing
+                if r.headers.get('Content-Length') == '0':
+                    raise ValueError("Server returned 0 bytes.")
 
-            # Stream download
-            with urllib.request.urlopen(req) as response, open(filename, 'wb') as out_file:
-                shutil.copyfileobj(response, out_file)
-            
+                with open(filename, 'wb') as f:
+                    shutil.copyfileobj(r.raw, f)
+
             # 3. Verify Download
             if os.path.exists(filename):
+                if os.path.getsize(filename) == 0:
+                     print("Error: File is empty (0 bytes).")
+                     os.remove(filename)
+                     time.sleep(1)
+                     continue
+
                 if expected_md5:
                     current_md5 = calculate_md5(filename)
                     if current_md5 == expected_md5:
                         print(f"Successfully downloaded and verified: {filename}")
                         return
                     else:
-                        print(f"MD5 mismatch after download! Expected {expected_md5}, got {current_md5}.")
-                        # Check for 'empty file' hash
+                        print(f"MD5 mismatch! Expected {expected_md5}, got {current_md5}.")
+                        # Check for the specific 'empty file' hash
                         if current_md5 == "d41d8cd98f00b204e9800998ecf8427e":
-                            print("Error: File is empty (server likely blocked request).")
+                             print("Error: File is effectively empty.")
                         
                         print("Deleting corrupt file...")
                         os.remove(filename)
                 else:
-                    if os.path.getsize(filename) > 0:
-                        print(f"Successfully downloaded: {filename}")
-                        return
-                    else:
-                        print("Error: Downloaded file is empty.")
-                        os.remove(filename)
+                    print(f"Successfully downloaded: {filename}")
+                    return
             else:
-                print(f"Error: {filename} not found after download attempt.")
+                print(f"Error: {filename} not found after download.")
 
-        except urllib.error.HTTPError as e:
-            print(f"HTTP Error {e.code}: {e.reason}")
-            # If 403 Forbidden, it usually means the Token is missing/wrong OR the User-Agent is blocked
-            if e.code == 403 and not token:
-                print("Hint: For private files, ensure your Token is correct.")
+        except RequestException as e:
+            print(f"HTTP Error: {e}")
+            if "403" in str(e) and not token:
+                print("Hint: 403 Forbidden. Ensure you are passing your 'token' in download_files().")
             time.sleep(1)
         except Exception as e:
-            print(f"Failed to download {filename}: {e}")
+            print(f"Download Error: {e}")
+            if os.path.exists(filename):
+                os.remove(filename)
             time.sleep(1)
 
-    print(f"FAILED to download {filename} correctly after {max_retries} attempts.")
+    print(f"FAILED to download {filename} after {max_retries} attempts.")
+    print("MANUAL DOWNLOAD REQUIRED: If this persists, download the file manually from Figshare and place it in the 'downloads' folder.")
 
 def download_files(path_to_repo, files_to_download, private_link=None, token=None, force_download=False):
     
@@ -138,7 +153,6 @@ def download_files(path_to_repo, files_to_download, private_link=None, token=Non
                 force_download=force_download
             )
 
-# Function to unzip file
 def unzip(zip_path, extract_path):
     print(f"Unzipping {zip_path}...")
     try:
