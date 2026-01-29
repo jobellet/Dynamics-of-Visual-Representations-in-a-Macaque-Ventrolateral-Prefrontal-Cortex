@@ -1,10 +1,10 @@
-import os
-import shutil
+import urllib.request
 import zipfile
+import shutil
+import os
+import pandas as pd
 import hashlib
 import time
-import requests
-import pandas as pd
 
 # Function to calculate MD5 checksum
 def calculate_md5(filepath):
@@ -18,18 +18,13 @@ def calculate_md5(filepath):
     except FileNotFoundError:
         return None
 
-# Function to download file with MD5 check
+# Function to download file using urllib (restored original method) with MD5 verification
 def download_figshare_file(code, filename, expected_md5=None, private_link='', force_download=False):
-    if private_link:
+    if len(private_link) > 0:
         link = f'https://figshare.com/ndownloader/files/{code}?private_link={private_link}'
     else:
         link = f'https://figshare.com/ndownloader/files/{code}'
     
-    # Use headers to mimic a browser and avoid 403/406 errors
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
-
     # 1. Check if file already exists
     if os.path.exists(filename) and not force_download:
         if expected_md5:
@@ -45,7 +40,7 @@ def download_figshare_file(code, filename, expected_md5=None, private_link='', f
             print(f"{filename} already exists (No MD5 provided).")
             return
 
-    # 2. Download loop
+    # 2. Download loop (Retry logic)
     max_retries = 10
     attempt = 0
     
@@ -54,29 +49,28 @@ def download_figshare_file(code, filename, expected_md5=None, private_link='', f
         print(f"Downloading {filename} (Attempt {attempt}/{max_retries})...")
         
         try:
-            # Stream download using requests
-            with requests.get(link, stream=True, headers=headers, allow_redirects=True) as r:
-                r.raise_for_status()
-                with open(filename, 'wb') as f:
-                    shutil.copyfileobj(r.raw, f)
-
-            # 3. Verify Download
-            if expected_md5:
-                current_md5 = calculate_md5(filename)
-                if current_md5 == expected_md5:
-                    print(f"Successfully downloaded and verified: {filename}")
-                    return
-                else:
-                    print(f"MD5 mismatch after download! Expected {expected_md5}, got {current_md5}.")
-                    print("Deleting corrupt file and retrying...")
-                    if os.path.exists(filename):
+            # Use urllib.request.urlretrieve as it was in the original working script
+            urllib.request.urlretrieve(link, filename)
+            
+            if os.path.exists(filename):
+                # 3. Verify Download
+                if expected_md5:
+                    current_md5 = calculate_md5(filename)
+                    if current_md5 == expected_md5:
+                        print(f"Successfully downloaded and verified: {filename}")
+                        return
+                    else:
+                        print(f"MD5 mismatch after download! Expected {expected_md5}, got {current_md5}.")
+                        print("Deleting corrupt file and retrying...")
                         os.remove(filename)
+                else:
+                    print(f"Successfully downloaded: {filename}")
+                    return
             else:
-                print(f"Successfully downloaded: {filename}")
-                return
+                print(f"Error: {filename} not found after download attempt.")
 
         except Exception as e:
-            print(f"Download error: {e}")
+            print(f"Failed to download {filename}: {e}")
             if os.path.exists(filename):
                 os.remove(filename)
             time.sleep(1) # Short pause before retry
@@ -91,7 +85,6 @@ def download_files(path_to_repo, files_to_download, private_link=None, force_dow
         return
 
     df = pd.read_csv(mapping_path)
-    
     # Create a download folder
     os.makedirs("downloads", exist_ok=True)
 
@@ -109,7 +102,7 @@ def download_files(path_to_repo, files_to_download, private_link=None, force_dow
             val = str(row['MD5']).strip()
             if val and val.lower() != 'nan':
                 md5 = val
-
+        
         if code != "" and code.lower() != "nan":
             full_path = os.path.join("downloads", filename)
             download_figshare_file(
