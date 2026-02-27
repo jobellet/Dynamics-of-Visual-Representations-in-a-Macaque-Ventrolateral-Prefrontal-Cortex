@@ -79,10 +79,16 @@ def sqeucl(mat, vec):
 
 def training_kind(name: str) -> str:
     lo = name.lower()
-    if "clip" in lo:
+    
+    # Catch all Contrastive/Language-Image Pretraining
+    if any(k in lo for k in ("clip", "siglip")):
         return "Language Aligned"
-    if any(k in lo for k in ("dino", "mae", "moco", "simmim", "self")):
+        
+    # Catch all Self-Supervised methods (Masked Image Modeling, Knowledge Distillation, Contrastive)
+    if any(k in lo for k in ("dino", "mae", "moco", "simmim", "beit", "self")):
         return "Self-supervised"
+        
+    # Standard labels trained on ImageNet (ResNet, VGG, ConvNeXt, Swin, DeiT, standard ViT, etc.)
     return "Supervised"
 
 def round_robin_pairs(n: int, rng):
