@@ -84,8 +84,13 @@ def training_kind(name: str) -> str:
     if any(k in lo for k in ("clip", "siglip")):
         return "Language Aligned"
         
-    # Catch all Self-Supervised methods (Masked Image Modeling, Knowledge Distillation, Contrastive)
-    if any(k in lo for k in ("dino", "mae", "moco", "simmim", "beit", "self")):
+    # Catch all Self-Supervised methods (Masked Image Modeling, Knowledge Distillation, Contrastive, Clustering)
+    ssl_keywords = (
+        "dino", "mae", "moco", "simmim", "beit", "self", 
+        "simclr", "swav", "barlow", "vicreg", "deepcluster", 
+        "sela", "byol", "rotnet"
+    )
+    if any(k in lo for k in ssl_keywords):
         return "Self-supervised"
         
     # Standard labels trained on ImageNet (ResNet, VGG, ConvNeXt, Swin, DeiT, standard ViT, etc.)
