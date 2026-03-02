@@ -88,7 +88,7 @@ def training_kind(name: str) -> str:
     ssl_keywords = (
         "dino", "mae", "moco", "simmim", "beit", "self", 
         "simclr", "swav", "barlow", "vicreg", "deepcluster", 
-        "sela", "byol", "rotnet"
+        "sela", "byol", "rotnet","fcmae","ibot"
     )
     if any(k in lo for k in ssl_keywords):
         return "Self-supervised"
